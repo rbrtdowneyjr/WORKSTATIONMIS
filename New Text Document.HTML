@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIS/MIS System - Secure Login Demo</title>
+  <!-- Google SSO Script -->
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <!-- Microsoft SSO: MSAL.js -->
+  <script src="https://alcdn.msauth.net/browser/2.14.2/js/msal-browser.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.1.2/dist/handsontable.full.min.css">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
+    #loginPage {
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center; 
+      height: 100vh; 
+      background-color: #007BFF;
+    }
+    #loginPage form, .sso-buttons {
+      background: white; 
+      padding: 20px; 
+      border-radius: 8px; 
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+      width: 300px;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    #loginPage input[type="text"],
+    #loginPage input[type="password"] {
+      width: 100%; 
+      padding: 10px; 
+      margin: 10px 0; 
+      box-sizing: border-box;
+    }
+    #loginPage button {
+      padding: 10px; 
+      background: #007BFF; 
+      color: white; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer;
+      width: 100%;
+    }
+    #loginPage button:hover { background: #0056b3; }
+    .sso-buttons button { margin: 5px 0; }
+    .link-account { text-align: left; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <!-- Login Page -->
+  <div id="loginPage">
+    <h2>Login to SIS/MIS</h2>
+    
+    <!-- Username/Password Form -->
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <div class="link-account">
+        <label>
+          <input type="checkbox" id="linkSSO"> Link this account with SSO
+        </label>
+      </div>
+      <button type="submit">Login</button>
+    </form>
+    
+    <!-- Google SSO Button -->
+    <div class="sso-buttons">
+      <div class="g-signin2" data-onsuccess="onGoogleSignIn"></div>
+    </div>
+    
+    <!-- Microsoft SSO Button -->
+    <div class="sso-buttons">
+      <button id="msSignIn">Login with Microsoft</button>
+    </div>
+  </div>
+  
+  <!-- Main Application (Hidden until login) -->
+  <div id="app" style="display:none;">
+    <h2>Welcome to the SIS/MIS System</h2>
+    <p>Your secure application content goes here.</p>
+    <button onclick="logout()">Logout</button>
+  </div>
+  
+  <script>
+    // --- Username/Password Login Demo ---
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Dummy username and password validation (replace with real authentication)
+      var username = document.getElementById('username').value;
+      var password = document.getElementById('password').value;
+      if(username === "user" && password === "pass") {
+        // Check if linking to SSO is requested
+        var linkSSO = document.getElementById('linkSSO').checked;
+        if(linkSSO) {
+          // In production, you would call your backend to link the accounts
+          console.log("Linking username/password account to SSO.");
+        }
+        loginSuccess(username);
+      } else {
+        alert("Invalid credentials. Try 'user' and 'pass'.");
+      }
+    });
+    
+    // --- Google SSO ---
+    function onGoogleSignIn(googleUser) {
+      var profile = googleUser.getBasicProfile();
+      console.log("Google SSO successful. User:", profile.getName());
+      // Here you would also send the token to your backend to verify and link accounts if needed.
+      loginSuccess(profile.getName());
+    }
+    
+    // --- Microsoft SSO ---
+    // Configure MSAL (replace with your Microsoft app configuration)
+    const msalConfig = {
+      auth: {
+        clientId: "YOUR_MICROSOFT_APP_CLIENT_ID",
+        redirectUri: window.location.href
+      }
+    };
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+    
+    document.getElementById('msSignIn').addEventListener('click', function() {
+      msalInstance.loginPopup({ scopes: ["user.read"] })
+      .then(response => {
+        console.log("Microsoft SSO successful. User:", response.account.name);
+        // In production, send the token to your backend to verify and link accounts if needed.
+        loginSuccess(response.account.name);
+      })
+      .catch(error => {
+        console.error(error);
+        alert("Microsoft SSO failed.");
+      });
+    });
+    
+    // --- Login Success Function ---
+    function loginSuccess(userName) {
+      // Hide the login page and show the app
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('app').innerHTML = `<h2>Welcome, ${userName}!</h2><p>This is your SIS/MIS dashboard.</p><button onclick="logout()">Logout</button>`;
+    }
+    
+    function logout() {
+      // Optionally sign out from SSO providers here
+      location.reload();
+    }
+  </script>
+</body>
+</html>
